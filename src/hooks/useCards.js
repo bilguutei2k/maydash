@@ -128,25 +128,23 @@ export function useCards(boardId, author) {
       return { ok: false }
     }
 
-    const { data, error } = await supabase
+    setCards((prev) =>
+      prev.map((card) => (card.id === id ? { ...card, ...updates } : card)).sort((a, b) => a.position - b.position)
+    )
+
+    const { error } = await supabase
       .from('cards')
       .update(updates)
       .eq('id', id)
-      .select()
-      .single()
 
-    if (error || !data) {
-      setError(error?.message || 'Could not save card changes.')
+    if (error) {
+      console.error('updateCard error:', error)
+      setError(error.message || 'Could not save card changes.')
       return { ok: false, error }
     }
 
     setError('')
-    if (data) {
-      setCards((prev) =>
-        prev.map((card) => (card.id === id ? data : card)).sort((a, b) => a.position - b.position)
-      )
-    }
-    return { ok: true, data }
+    return { ok: true }
   }, [])
 
   const deleteCard = useCallback(async (id) => {

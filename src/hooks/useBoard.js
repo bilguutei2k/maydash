@@ -1,20 +1,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const BOARD_KEY = 'maydash_board_id'
-const BOARD_QUERY_KEY = 'board'
-
-function getBoardIdFromUrl() {
-  const params = new URLSearchParams(window.location.search)
-  return params.get(BOARD_QUERY_KEY)
-}
-
-function syncBoardId(id) {
-  localStorage.setItem(BOARD_KEY, id)
-
+function normalizeMaydashUrl() {
   const url = new URL(window.location.href)
-  url.searchParams.set(BOARD_QUERY_KEY, id)
-  window.history.replaceState({}, '', url)
+  if (url.search || url.hash) {
+    url.search = ''
+    url.hash = ''
+    window.history.replaceState({}, '', url)
+  }
 }
 
 export function useBoard(author) {
@@ -43,73 +36,50 @@ export function useBoard(author) {
       setLoading(true)
       setError('')
       setCreatedBoardId(null)
-      const existingBoardId = getBoardIdFromUrl() || localStorage.getItem(BOARD_KEY)
+      normalizeMaydashUrl()
 
-      if (!existingBoardId) {
-        const { data, error } = await supabase
-          .from('boards')
-          .insert({ name: 'My board' })
-          .select()
-          .single()
+      const { data: existingBoards, error: fetchError } = await supabase
+        .from('boards')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(1)
 
-        if (!active) {
-          return
-        }
+      if (!active) {
+        return
+      }
 
-        if (error || !data) {
-          setError(error?.message || 'Could not create a Maydash board.')
-          setLoading(false)
-          return
-        }
-
-        syncBoardId(data.id)
-        setBoard(data)
-        setCreatedBoardId(data.id)
+      if (fetchError) {
+        setError(fetchError.message || 'Could not load the Maydash board.')
         setLoading(false)
         return
       }
 
-      const { data, error } = await supabase
+      const existingBoard = existingBoards?.[0]
+
+      if (existingBoard) {
+        setBoard(existingBoard)
+        setLoading(false)
+        return
+      }
+
+      const { data: createdBoard, error: createError } = await supabase
         .from('boards')
-        .select('*')
-        .eq('id', existingBoardId)
+        .insert({ name: 'My board' })
+        .select()
         .single()
 
       if (!active) {
         return
       }
 
-      if (error || !data) {
-        localStorage.removeItem(BOARD_KEY)
-        const currentUrl = new URL(window.location.href)
-        currentUrl.searchParams.delete(BOARD_QUERY_KEY)
-        window.history.replaceState({}, '', currentUrl)
-
-        const { data: fallbackBoard, error: createError } = await supabase
-          .from('boards')
-          .insert({ name: 'My board' })
-          .select()
-          .single()
-
-        if (!active) {
-          return
-        }
-
-        if (createError || !fallbackBoard) {
-          setError(createError?.message || 'Could not load or create a Maydash board.')
-          setLoading(false)
-          return
-        }
-
-        syncBoardId(fallbackBoard.id)
-        setBoard(fallbackBoard)
-        setCreatedBoardId(fallbackBoard.id)
+      if (createError || !createdBoard) {
+        setError(createError?.message || 'Could not create the Maydash board.')
         setLoading(false)
         return
       }
 
-      syncBoardId(data.id)
-      setBoard(data)
+      setBoard(createdBoard)
+      setCreatedBoardId(createdBoard.id)
       setLoading(false)
     }
 
@@ -142,10 +112,7 @@ export function useBoard(author) {
     }
 
     setError('')
-    if (data) {
-      setBoard(data)
-    }
-
+    setBoard(data)
     return { ok: true, data }
   }
 

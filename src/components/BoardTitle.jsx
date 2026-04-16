@@ -6,7 +6,7 @@ export default function BoardTitle({ title, cardCount, lastUpdated, onAddCard })
       <div className="board-title-row">
         <h1 className="board-title">{title || 'MY BOARD'}</h1>
         <button type="button" className="primary-pill-btn add-card-btn" onClick={onAddCard}>
-          ＋ ADD CARD
+          + ADD CARD
         </button>
       </div>
       <p className="board-meta">
