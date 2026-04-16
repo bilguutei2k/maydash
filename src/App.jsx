@@ -5,13 +5,16 @@ import CardGrid from './components/CardGrid'
 import AddCardModal from './components/AddCardModal'
 import SettingsPanel from './components/SettingsPanel'
 import NameEntryScreen from './components/NameEntryScreen'
+import PasswordScreen from './components/PasswordScreen'
 import { useAuthor } from './hooks/useAuthor'
 import { useBoard } from './hooks/useBoard'
 import { useCards } from './hooks/useCards'
 import { WELCOME_CARD_COLOR } from './constants/colors'
 import { hasSupabaseEnv } from './lib/supabase'
 
-export default function App() {
+const AUTH_KEY = 'maydash_authed'
+
+function MaydashApp() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -68,10 +71,8 @@ export default function App() {
 
   async function copyLink() {
     const shareUrl = new URL(window.location.href)
-    if (board?.id) {
-      shareUrl.searchParams.set('board', board.id)
-    }
-
+    shareUrl.search = ''
+    shareUrl.hash = ''
     await navigator.clipboard.writeText(shareUrl.toString())
     setCopied(true)
 
@@ -128,4 +129,14 @@ export default function App() {
       {modalOpen && <AddCardModal onClose={() => setModalOpen(false)} onSubmit={addCard} />}
     </div>
   )
+}
+
+export default function App() {
+  const [authed, setAuthed] = useState(() => localStorage.getItem(AUTH_KEY) === 'true')
+
+  if (!authed) {
+    return <PasswordScreen onSuccess={() => setAuthed(true)} />
+  }
+
+  return <MaydashApp />
 }

@@ -451,7 +451,6 @@ textarea:focus {
   letter-spacing: -0.01em;
   color: var(--text-primary);
   margin-bottom: 5px;
-  cursor: text;
 }
 
 .card-body {
@@ -459,32 +458,23 @@ textarea:focus {
   line-height: 1.65;
   color: var(--text-body);
   white-space: pre-wrap;
+}
+
+.card-text-editable {
   cursor: text;
+}
+
+.card-text-static {
+  cursor: default;
 }
 
 .card-inline-title-input {
   width: 100%;
-  border-style: solid;
-  border-width: 2px;
-  border-radius: 8px;
-  background: transparent;
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 6px 8px;
   margin-bottom: 5px;
 }
 
 .card-inline-body-input {
   width: 100%;
-  border-style: solid;
-  border-width: 2px;
-  border-radius: 8px;
-  background: transparent;
-  font-family: 'Syne', sans-serif;
-  font-size: 12px;
-  min-height: 60px;
-  resize: none;
   padding: 7px 8px;
 }
 
