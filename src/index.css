@@ -141,6 +141,15 @@ textarea:focus {
   flex-wrap: wrap;
 }
 
+.save-error-banner {
+  background: var(--card-bg);
+  border-bottom: 2px solid var(--black);
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 .settings-label,
 .field-label {
   font-size: 10px;

@@ -19,34 +19,36 @@ export default function App() {
   const copyTimerRef = useRef(null)
   const welcomeCardInserted = useRef(false)
   const { author, setAuthor } = useAuthor()
-  const { board, loading: boardLoading, updateBoardName } = useBoard(author)
-  const { cards, loading: cardsLoading, addCard, updateCard, deleteCard, swapCards } = useCards(board?.id, author)
+  const { board, loading: boardLoading, error: boardError, createdBoardId, updateBoardName } = useBoard(author)
+  const { cards, loading: cardsLoading, error: cardsError, addCard, updateCard, deleteCard, swapCards } = useCards(board?.id, author)
 
   useEffect(() => {
-    const authorName = localStorage.getItem('maydash_author_name')
-    const boardId = localStorage.getItem('maydash_board_id')
-    setNeedsWelcomeCard(Boolean(authorName) && !boardId)
-  }, [author])
+    setNeedsWelcomeCard(Boolean(author) && Boolean(createdBoardId))
+  }, [author, createdBoardId])
 
   useEffect(() => {
     async function insertWelcomeCard() {
-      if (!board?.id || !author || !needsWelcomeCard || welcomeCardInserted.current) {
+      if (!board?.id || !author || !needsWelcomeCard || welcomeCardInserted.current || createdBoardId !== board.id) {
         return
       }
 
       welcomeCardInserted.current = true
-      await addCard({
+      const result = await addCard({
         type: 'note',
         title: 'Welcome to Maydash',
         body: 'This is your shared brainstorm board. Add notes, images, and links. Share the link with a collaborator.',
         color: WELCOME_CARD_COLOR,
         url: null,
       })
-      setNeedsWelcomeCard(false)
+      if (result?.ok) {
+        setNeedsWelcomeCard(false)
+      } else {
+        welcomeCardInserted.current = false
+      }
     }
 
     insertWelcomeCard()
-  }, [addCard, author, board?.id, needsWelcomeCard])
+  }, [addCard, author, board?.id, createdBoardId, needsWelcomeCard])
 
   useEffect(() => () => {
     if (copyTimerRef.current) {
@@ -62,8 +64,15 @@ export default function App() {
     return [...cards].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
   }, [cards])
 
+  const saveError = boardError || cardsError
+
   async function copyLink() {
-    await navigator.clipboard.writeText(window.location.href)
+    const shareUrl = new URL(window.location.href)
+    if (board?.id) {
+      shareUrl.searchParams.set('board', board.id)
+    }
+
+    await navigator.clipboard.writeText(shareUrl.toString())
     setCopied(true)
 
     if (copyTimerRef.current) {
@@ -101,6 +110,7 @@ export default function App() {
           copied={copied}
         />
         {settingsOpen && <SettingsPanel board={board} onSave={updateBoardName} onClose={() => setSettingsOpen(false)} />}
+        {saveError ? <div className="save-error-banner">{saveError}</div> : null}
         <div className="board-area">
           <BoardTitle title={board?.name} cardCount={cards.length} lastUpdated={lastCard?.created_at} onAddCard={() => setModalOpen(true)} />
           <div className="grid-area">

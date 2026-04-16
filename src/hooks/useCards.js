@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 export function useCards(boardId, author) {
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(Boolean(boardId))
+  const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
@@ -12,6 +13,7 @@ export function useCards(boardId, author) {
       if (!boardId) {
         setCards([])
         setLoading(false)
+        setError('')
         return
       }
 
@@ -22,8 +24,9 @@ export function useCards(boardId, author) {
       }
 
       setLoading(true)
+      setError('')
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('cards')
         .select('*')
         .eq('board_id', boardId)
@@ -31,6 +34,9 @@ export function useCards(boardId, author) {
         .order('position', { ascending: true })
 
       if (active) {
+        if (error) {
+          setError(error.message || 'Could not load cards from Supabase.')
+        }
         setCards(data || [])
         setLoading(false)
       }
@@ -78,12 +84,12 @@ export function useCards(boardId, author) {
 
   const addCard = useCallback(async (cardData) => {
     if (!supabase) {
-      return
+      return { ok: false }
     }
 
     const maxPosition = cards.length ? Math.max(...cards.map((card) => card.position)) : -1
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('cards')
       .insert({
         board_id: boardId,
@@ -99,6 +105,12 @@ export function useCards(boardId, author) {
       .select()
       .single()
 
+    if (error || !data) {
+      setError(error?.message || 'Could not save the new card.')
+      return { ok: false, error }
+    }
+
+    setError('')
     if (data) {
       setCards((prev) => {
         if (prev.find((card) => card.id === data.id)) {
@@ -108,54 +120,69 @@ export function useCards(boardId, author) {
         return [...prev, data].sort((a, b) => a.position - b.position)
       })
     }
+    return { ok: true, data }
   }, [author, boardId, cards])
 
   const updateCard = useCallback(async (id, updates) => {
     if (!supabase) {
-      return
+      return { ok: false }
     }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('cards')
       .update(updates)
       .eq('id', id)
       .select()
       .single()
 
+    if (error || !data) {
+      setError(error?.message || 'Could not save card changes.')
+      return { ok: false, error }
+    }
+
+    setError('')
     if (data) {
       setCards((prev) =>
         prev.map((card) => (card.id === id ? data : card)).sort((a, b) => a.position - b.position)
       )
     }
+    return { ok: true, data }
   }, [])
 
   const deleteCard = useCallback(async (id) => {
     if (!supabase) {
-      return
+      return { ok: false }
     }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('cards')
       .update({ deleted: true })
       .eq('id', id)
       .select()
       .single()
 
+    if (error || !data) {
+      setError(error?.message || 'Could not delete the card.')
+      return { ok: false, error }
+    }
+
+    setError('')
     if (data) {
       setCards((prev) => prev.filter((card) => card.id !== id))
     }
+    return { ok: true, data }
   }, [])
 
   const swapCards = useCallback(async (idA, idB) => {
     if (!supabase) {
-      return
+      return { ok: false }
     }
 
     const cardA = cards.find((card) => card.id === idA)
     const cardB = cards.find((card) => card.id === idB)
 
     if (!cardA || !cardB) {
-      return
+      return { ok: false }
     }
 
     const { error } = await supabase
@@ -168,24 +195,29 @@ export function useCards(boardId, author) {
         { onConflict: 'id' }
       )
 
-    if (!error) {
-      setCards((prev) =>
-        prev
-          .map((card) => {
-            if (card.id === idA) {
-              return { ...card, position: cardB.position }
-            }
-
-            if (card.id === idB) {
-              return { ...card, position: cardA.position }
-            }
-
-            return card
-          })
-          .sort((a, b) => a.position - b.position)
-      )
+    if (error) {
+      setError(error.message || 'Could not reorder cards.')
+      return { ok: false, error }
     }
+
+    setError('')
+    setCards((prev) =>
+      prev
+        .map((card) => {
+          if (card.id === idA) {
+            return { ...card, position: cardB.position }
+          }
+
+          if (card.id === idB) {
+            return { ...card, position: cardA.position }
+          }
+
+          return card
+        })
+        .sort((a, b) => a.position - b.position)
+    )
+    return { ok: true }
   }, [cards])
 
-  return { cards, loading, addCard, updateCard, deleteCard, swapCards }
+  return { cards, loading, error, addCard, updateCard, deleteCard, swapCards }
 }
