@@ -209,7 +209,30 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
           style={{ textDecoration: 'none', display: 'block' }}
         >
           <div className="card-link-row">
-            <div className="card-favicon" />
+            <img
+              src={`https://www.google.com/s2/favicons?domain=${(() => {
+                try {
+                  return new URL(card.url).hostname
+                } catch {
+                  return card.url
+                }
+              })()}&sz=32`}
+              width="13"
+              height="13"
+              style={{
+                borderRadius: '3px',
+                display: 'block',
+                flexShrink: 0,
+              }}
+              onError={(event) => {
+                event.target.style.display = 'none'
+                event.target.nextSibling.insertAdjacentHTML(
+                  'beforebegin',
+                  '<div style="width:13px;height:13px;border-radius:3px;background:var(--yellow);border:1px solid var(--black);flex-shrink:0"></div>'
+                )
+              }}
+              alt=""
+            />
             <span className="card-link-text">{card.title || card.url} ↗</span>
           </div>
         </a>

@@ -503,15 +503,6 @@ textarea:focus {
   margin-top: 7px;
 }
 
-.card-favicon {
-  width: 13px;
-  height: 13px;
-  border-radius: 3px;
-  background: var(--yellow);
-  border: 1px solid var(--black);
-  flex-shrink: 0;
-}
-
 .card-link-text {
   font-size: 11px;
   color: var(--text-body);
