@@ -12,6 +12,8 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
   const [editTitle, setEditTitle] = useState(card.title || '')
   const [editBody, setEditBody] = useState(card.body || '')
   const [isExiting, setIsExiting] = useState(false)
+  const [imgError, setImgError] = useState(false)
+  const [faviconError, setFaviconError] = useState(false)
   const bodyInputRef = useRef(null)
 
   const cardIndex = cards.findIndex((item) => item.id === card.id)
@@ -138,13 +140,13 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
       ) : null}
 
       {card.type === 'image' && card.url ? (
-        <>
-          <a
-            href={card.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'block', marginBottom: '8px' }}
-          >
+        <a
+          href={card.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: 'block', marginBottom: '8px' }}
+        >
+          {!imgError ? (
             <img
               src={card.url}
               alt={card.title || 'image'}
@@ -154,14 +156,12 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
                 display: 'block',
                 cursor: 'zoom-in',
               }}
-              onError={(event) => {
-                event.target.style.display = 'none'
-                event.target.closest('a').nextSibling.style.display = 'flex'
-              }}
+              onError={() => setImgError(true)}
             />
-          </a>
-          <div className="image-fallback">Image unavailable</div>
-        </>
+          ) : (
+            <div className="image-fallback">Image unavailable</div>
+          )}
+        </a>
       ) : null}
 
       {editingField === 'body' ? (
@@ -209,30 +209,27 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
           style={{ textDecoration: 'none', display: 'block' }}
         >
           <div className="card-link-row">
-            <img
-              src={`https://www.google.com/s2/favicons?domain=${(() => {
-                try {
-                  return new URL(card.url).hostname
-                } catch {
-                  return card.url
-                }
-              })()}&sz=32`}
-              width="13"
-              height="13"
-              style={{
+            {!faviconError ? (
+              <img
+                src={`https://www.google.com/s2/favicons?domain=${(() => {
+                  try { return new URL(card.url).hostname } catch { return '' }
+                })()}&sz=32`}
+                width="13"
+                height="13"
+                style={{ borderRadius: '3px', display: 'block', flexShrink: 0 }}
+                onError={() => setFaviconError(true)}
+                alt=""
+              />
+            ) : (
+              <div style={{
+                width: '13px',
+                height: '13px',
                 borderRadius: '3px',
-                display: 'block',
+                background: 'var(--yellow)',
+                border: '1px solid var(--black)',
                 flexShrink: 0,
-              }}
-              onError={(event) => {
-                event.target.style.display = 'none'
-                event.target.nextSibling.insertAdjacentHTML(
-                  'beforebegin',
-                  '<div style="width:13px;height:13px;border-radius:3px;background:var(--yellow);border:1px solid var(--black);flex-shrink:0"></div>'
-                )
-              }}
-              alt=""
-            />
+              }} />
+            )}
             <span className="card-link-text">{card.title || card.url} ↗</span>
           </div>
         </a>
