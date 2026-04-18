@@ -14,6 +14,7 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
   const [isExiting, setIsExiting] = useState(false)
   const [imgError, setImgError] = useState(false)
   const [faviconError, setFaviconError] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const bodyInputRef = useRef(null)
 
   const cardIndex = cards.findIndex((item) => item.id === card.id)
@@ -75,13 +76,6 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
     setEditingField('body')
   }
 
-  function handleDelete() {
-    setIsExiting(true)
-    window.setTimeout(() => {
-      onDelete(card.id)
-    }, 300)
-  }
-
   const cardStyle = isWelcomeCard
     ? {
         borderRadius: 'var(--radius-card)',
@@ -91,6 +85,8 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
         background: 'var(--welcome-card-bg)',
         padding: '13px 14px',
         animation: 'cardEnter 0.25s ease-out forwards',
+        opacity: confirming ? 0.85 : 1,
+        transition: 'opacity 0.15s',
       }
     : {
         borderRadius: 'var(--radius-card)',
@@ -98,6 +94,8 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
         background: getBgForColor(card.color),
         padding: '13px 14px',
         animation: 'cardEnter 0.25s ease-out forwards',
+        opacity: confirming ? 0.85 : 1,
+        transition: 'opacity 0.15s',
       }
 
   return (
@@ -258,11 +256,63 @@ export default function Card({ card, author, onDelete, onUpdate, onSwap, cards }
           >
             ↓
           </button>
-          <button type="button" className="card-action-btn" onClick={handleDelete}>
+          <button type="button" className="card-action-btn" onClick={() => setConfirming(true)}>
             ×
           </button>
         </div>
       </div>
+      {confirming && (
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          marginTop: '10px',
+          paddingTop: '10px',
+          borderTop: '1.5px solid rgba(0,0,0,0.07)',
+        }}>
+          <button
+            onClick={() => setConfirming(false)}
+            style={{
+              flex: 1,
+              background: 'transparent',
+              border: '1.5px solid var(--border-light)',
+              borderRadius: '20px',
+              padding: '7px',
+              fontFamily: "'Syne', sans-serif",
+              fontSize: '10px',
+              fontWeight: 700,
+              letterSpacing: '.06em',
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              setConfirming(false)
+              setIsExiting(true)
+              setTimeout(() => onDelete(card.id), 300)
+            }}
+            style={{
+              flex: 1,
+              background: 'var(--black)',
+              border: '1.5px solid var(--black)',
+              borderRadius: '20px',
+              padding: '7px',
+              fontFamily: "'Syne', sans-serif",
+              fontSize: '10px',
+              fontWeight: 800,
+              letterSpacing: '.06em',
+              textTransform: 'uppercase',
+              color: 'var(--yellow)',
+              cursor: 'pointer',
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   )
 }
