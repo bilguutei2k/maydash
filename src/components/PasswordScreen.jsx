@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const AUTH_KEY = 'maydash_authed'
+const AUTH_KEY = 'dashletter_authed'
 
 export default function PasswordScreen({ onSuccess }) {
   const [password, setPassword] = useState('')
