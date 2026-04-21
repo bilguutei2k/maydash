@@ -1,124 +1,157 @@
 import { useState } from 'react'
 
-const AUTH_KEY = 'dashletter_authed'
-
 export default function PasswordScreen({ onSuccess }) {
   const [password, setPassword] = useState('')
-  const [showError, setShowError] = useState(false)
+  const [error, setError] = useState(false)
 
-  function handleSubmit(event) {
-    event.preventDefault()
+  const PASSWORD_A = import.meta.env.VITE_PASSWORD_A
+  const PASSWORD_B = import.meta.env.VITE_PASSWORD_B
 
-    if (password === import.meta.env.VITE_APP_PASSWORD) {
-      localStorage.setItem(AUTH_KEY, 'true')
-      setShowError(false)
-      onSuccess()
-      return
+  function handleSubmit(e) {
+    e.preventDefault()
+    if (password === PASSWORD_A) {
+      localStorage.setItem('dashletter_authed', 'true')
+      localStorage.setItem('dashletter_identity', 'A')
+      onSuccess('A')
+    } else if (password === PASSWORD_B) {
+      localStorage.setItem('dashletter_authed', 'true')
+      localStorage.setItem('dashletter_identity', 'B')
+      onSuccess('B')
+    } else {
+      setError(true)
+      setPassword('')
     }
-
-    setShowError(true)
-    setPassword('')
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#f5e400',
-        display: 'grid',
-        placeItems: 'center',
-        padding: '20px',
-        fontFamily: "'Syne', sans-serif",
-      }}
-    >
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          width: 'min(100%, 420px)',
-          background: '#f5e400',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'stretch',
-        }}
-      >
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: '28px',
-            fontWeight: 800,
-            color: '#1a1a1a',
-            marginBottom: '8px',
-          }}
-        >
-          Enter password
-        </h1>
-        <p
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: '14px',
-            fontWeight: 400,
-            color: 'rgba(0,0,0,0.45)',
-            marginBottom: '18px',
-          }}
-        >
-          This board is private.
-        </p>
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value)
-            if (showError) {
-              setShowError(false)
-            }
-          }}
-          autoFocus
-          style={{
-            border: '2px solid #1a1a1a',
-            borderRadius: '12px',
-            padding: '10px 14px',
-            fontFamily: "'Syne', sans-serif",
-            fontSize: '14px',
-            fontWeight: 700,
-            background: 'transparent',
-            width: '100%',
-            outline: 'none',
-            marginBottom: '12px',
-          }}
-        />
-        {showError ? (
-          <p
-            style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              color: '#c47c7c',
-              textAlign: 'center',
-              marginBottom: '12px',
-            }}
-          >
-            Incorrect password
-          </p>
-        ) : null}
-        <button
-          type="submit"
-          style={{
-            background: '#1a1a1a',
-            color: '#f5e400',
-            border: 'none',
-            borderRadius: '20px',
-            padding: '11px',
-            fontFamily: "'Syne', sans-serif",
-            fontSize: '11px',
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            width: '100%',
-            cursor: 'pointer',
-          }}
-        >
-          Enter →
-        </button>
-      </form>
+    <div style={styles.overlay}>
+      <div style={styles.card}>
+        <div style={styles.eyebrow}>Private letters</div>
+        <div style={styles.wordmarkWrap}>
+          <div style={styles.wordmarkShadow}>dashletter</div>
+          <div style={styles.wordmark}>dashletter</div>
+        </div>
+        <p style={styles.sub}>Enter your password</p>
+
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); setError(false) }}
+            style={styles.input}
+            autoFocus
+          />
+          <button type="submit" style={styles.button}>
+            Enter →
+          </button>
+          {error && (
+            <div style={styles.error}>Incorrect password</div>
+          )}
+        </form>
+      </div>
     </div>
   )
+}
+
+const styles = {
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'var(--page-bg)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '20px',
+    fontFamily: "'Syne', sans-serif",
+  },
+  card: {
+    background: 'var(--card-bg)',
+    border: `2.5px solid var(--black)`,
+    borderRadius: '24px',
+    padding: '32px 28px',
+    width: '100%',
+    maxWidth: '380px',
+    boxShadow: 'var(--shadow-app)',
+  },
+  eyebrow: {
+    fontSize: '9px',
+    fontWeight: 700,
+    letterSpacing: '.14em',
+    textTransform: 'uppercase',
+    color: 'var(--pink-deep)',
+    marginBottom: '8px',
+  },
+  wordmarkWrap: {
+    position: 'relative',
+    marginBottom: '10px',
+    lineHeight: 1,
+  },
+  wordmarkShadow: {
+    position: 'absolute',
+    top: '4px',
+    left: '4px',
+    fontSize: '40px',
+    fontWeight: 800,
+    color: 'var(--pink)',
+    letterSpacing: '-.03em',
+    lineHeight: 0.85,
+    userSelect: 'none',
+    pointerEvents: 'none',
+  },
+  wordmark: {
+    fontSize: '40px',
+    fontWeight: 800,
+    color: 'var(--black)',
+    letterSpacing: '-.03em',
+    lineHeight: 0.85,
+    position: 'relative',
+    zIndex: 1,
+  },
+  sub: {
+    fontSize: '11px',
+    fontWeight: 600,
+    letterSpacing: '.06em',
+    textTransform: 'uppercase',
+    color: 'var(--text-muted)',
+    marginTop: '14px',
+    marginBottom: '20px',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  input: {
+    border: '2px solid var(--black)',
+    borderRadius: '12px',
+    padding: '11px 14px',
+    fontFamily: "'Syne', sans-serif",
+    fontSize: '14px',
+    fontWeight: 700,
+    background: 'transparent',
+    width: '100%',
+    outline: 'none',
+    color: 'var(--text-primary)',
+  },
+  button: {
+    background: 'var(--black)',
+    color: 'var(--pink)',
+    border: 'none',
+    borderRadius: '20px',
+    padding: '12px',
+    fontFamily: "'Syne', sans-serif",
+    fontSize: '11px',
+    fontWeight: 800,
+    letterSpacing: '.06em',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  error: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#c47c7c',
+    textAlign: 'center',
+    marginTop: '4px',
+  },
 }

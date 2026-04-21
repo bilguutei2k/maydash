@@ -1,19 +1,23 @@
 import { useState } from 'react'
 import PasswordScreen from './components/PasswordScreen'
+import LetterShell from './components/LetterShell'
 
 export default function App() {
   const [authed, setAuthed] = useState(
     localStorage.getItem('dashletter_authed') === 'true'
   )
+  const [identity, setIdentity] = useState(
+    localStorage.getItem('dashletter_identity')
+  )
 
-  if (!authed) {
-    return <PasswordScreen onSuccess={() => setAuthed(true)} />
+  function handleSuccess(id) {
+    setAuthed(true)
+    setIdentity(id)
   }
 
-  return (
-    <div style={{ padding: '40px', fontFamily: "'Syne', sans-serif" }}>
-      <h1>dashletter</h1>
-      <p>Foundation ready. Build the canvas next.</p>
-    </div>
-  )
+  if (!authed || !identity) {
+    return <PasswordScreen onSuccess={handleSuccess} />
+  }
+
+  return <LetterShell identity={identity} />
 }
