@@ -1,7 +1,20 @@
 import { useWeek } from '../hooks/useWeek'
+import { useElements } from '../hooks/useElements'
+import Canvas from './Canvas'
 
 export default function LetterShell({ identity }) {
-  const { week, loading, error } = useWeek()
+  const { week, loading: weekLoading, error: weekError } = useWeek()
+  const {
+    elements,
+    loading: elementsLoading,
+    error: elementsError,
+    addElement,
+    updateElement,
+    deleteElement,
+    bringToFront,
+  } = useElements(week?.id, identity)
+
+  const error = weekError || elementsError
 
   return (
     <div style={styles.wrapper}>
@@ -19,19 +32,28 @@ export default function LetterShell({ identity }) {
           <div style={styles.weekHeader}>
             <div style={styles.weekEyebrow}>Your letter for</div>
             <div style={styles.weekTitle}>
-              {loading ? 'Loading...' : error ? 'Error' : `Week ${week?.week_number}, ${week?.year}`}
+              {weekLoading ? 'Loading...' : `Week ${week?.week_number}, ${week?.year}`}
             </div>
+            {elements.length > 0 && !elementsLoading && (
+              <div style={styles.weekMeta}>
+                {elements.length} element{elements.length === 1 ? '' : 's'}
+              </div>
+            )}
           </div>
 
-          <div style={styles.canvas}>
-            <div style={styles.canvasEmpty}>
-              Your blank letter
-              <br />
-              <span style={styles.canvasEmptySub}>
-                Elements will appear here in the next session
-              </span>
-            </div>
-          </div>
+          {error && (
+            <div style={styles.errorBar}>{error}</div>
+          )}
+
+          {!weekLoading && !elementsLoading && week && (
+            <Canvas
+              elements={elements}
+              onAdd={addElement}
+              onUpdate={updateElement}
+              onDelete={deleteElement}
+              onBringToFront={bringToFront}
+            />
+          )}
         </div>
 
       </div>
@@ -96,11 +118,11 @@ const styles = {
     color: 'var(--pink)',
   },
   body: {
-    padding: '32px 28px',
+    padding: '24px 20px',
   },
   weekHeader: {
-    marginBottom: '24px',
-    paddingBottom: '20px',
+    marginBottom: '20px',
+    paddingBottom: '16px',
     borderBottom: '2px solid var(--border-light)',
   },
   weekEyebrow: {
@@ -118,27 +140,21 @@ const styles = {
     letterSpacing: '-.03em',
     lineHeight: 1,
   },
-  canvas: {
-    border: '2px dashed var(--border-light)',
-    borderRadius: 'var(--radius-card)',
-    minHeight: '500px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'var(--pink-soft)',
-  },
-  canvasEmpty: {
-    textAlign: 'center',
-    fontSize: '14px',
-    fontWeight: 700,
-    color: 'var(--text-muted)',
-    fontFamily: "'Syne', sans-serif",
-    lineHeight: 1.6,
-  },
-  canvasEmptySub: {
+  weekMeta: {
     fontSize: '11px',
     fontWeight: 500,
     color: 'var(--text-muted)',
-    opacity: 0.7,
+    marginTop: '6px',
+    letterSpacing: '.04em',
+  },
+  errorBar: {
+    background: '#fce8e8',
+    border: '1.5px solid #c47c7c',
+    color: '#c47c7c',
+    fontSize: '12px',
+    fontWeight: 600,
+    padding: '10px 14px',
+    borderRadius: '10px',
+    marginBottom: '16px',
   },
 }
